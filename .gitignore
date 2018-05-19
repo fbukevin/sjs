@@ -7,3 +7,5 @@ tools/build_duktape/out/
 *.pyc
 include/sjs/build.h
 include/sjs/version.h
+.idea/
+cmake-build-debug/
