@@ -7,8 +7,7 @@
 #include "../internal.h"
 
 
-void sjs__executable(char* buf, size_t size) {
-    fprintf(stdout, "你好\n");
+void sjs__executable(char* buf, size_t size) {    
 
     /* realpath(exepath) may be > PATH_MAX so double it to be on the safe side. */
     char abspath[PATH_MAX * 2 + 1];

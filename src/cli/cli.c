@@ -321,7 +321,7 @@ static void handle_sigint(int sig) {
         exit(EXIT_SUCCESS);
     } else {
         cli.got_sigint = 1;
-        fprintf(stdout, "\r\n(^C ag你ain to exit)\r\n");
+        fprintf(stdout, "\r\n(^C again to exit)\r\n");
         fflush(stdout);
     }
 }
