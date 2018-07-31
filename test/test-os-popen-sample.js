@@ -20,9 +20,7 @@ function popen(filename) {
         os.dup2(stdin[0], 0, false);
         os.dup2(stdout[1], 1, false);
         os.dup2(stderr[1], 2, false);
-        os.execve(system.executable,
-                  [system.executable, filename],
-                  {SJS_PATH: system.env.SJS_PATH});
+        os.execv(system.executable, [system.executable, filename]);
         assert(false);
     } else {
         // parent
@@ -43,8 +41,10 @@ var data;
 var r = popen(path.join(__dirname, 'helper3.js'));
 os.write(r.stdin_fd, TEXT);
 data = os.read(r.stdout_fd);
+data = new TextDecoder().decode(data);
 assert.equal(data, TEXT);
 data = os.read(r.stderr_fd);
+data = new TextDecoder().decode(data);
 assert.equal(data, TEXT);
 
 os.close(r.stdin_fd);

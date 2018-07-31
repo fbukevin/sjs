@@ -5,17 +5,20 @@ import sys
 
 
 cmd = './build/sjs'
-env = {'SJS_PATH': os.getenv('SJS_PATH')}
 
 results = {}
 
 
 def green(text):
-    return '\033[92m{}\033[0m'.format(text)
+    return '\033[32m{}\033[0m'.format(text)
 
 
 def red(text):
-    return '\033[91m{}\033[0m'.format(text)
+    return '\033[31m{}\033[0m'.format(text)
+
+
+def yellow(text):
+    return '\033[33m{}\033[0m'.format(text)
 
 
 def run_test(f):
@@ -23,9 +26,13 @@ def run_test(f):
     sys.stdout.write('Running {:50}'.format(test_file))
     sys.stdout.flush()
     try:
-        subprocess.check_output('%s %s' % (cmd, f), stderr=subprocess.STDOUT, shell=True, env=env)
+        subprocess.check_output('%s %s' % (cmd, f), stderr=subprocess.STDOUT, shell=True, timeout=5)
     except subprocess.CalledProcessError as e:
         sys.stdout.write(red('ERROR'))
+        sys.stdout.write('\n')
+        results[test_file] = e
+    except subprocess.TimeoutExpired as e:
+        sys.stdout.write(yellow('TIMEOUT'))
         sys.stdout.write('\n')
         results[test_file] = e
     else:

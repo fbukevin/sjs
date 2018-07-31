@@ -1,6 +1,6 @@
 
 MAKE?=make
-PYTHON?=python
+PYTHON?=python3
 
 CMAKE_MK=build/Makefile
 
@@ -28,10 +28,7 @@ clean:
 distclean:
 	@rm -rf build
 
-run: build
-	SJS_PATH=build:modules ./build/sjs
-
 test: build
-	env SJS_PATH=build:modules $(PYTHON) tools/test.py test/
+	$(PYTHON) tools/test.py test/
 
 .PHONY: all build install clean distclean run

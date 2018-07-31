@@ -16,11 +16,12 @@ if (pid == 0) {
     // child
     os.execve(system.executable,
               [system.executable, path.join(__dirname, 'helper1.js')],
-              {PARENT_FD: wfd, SJS_PATH: system.env.SJS_PATH});
+              {PARENT_FD: wfd});
     assert(false);
 } else {
     // parent
     var data = os.read(rfd);
+    data = new TextDecoder().decode(data);
     assert.equal(data, "HELLO");
     var r = os.waitpid(pid);
     assert.equal(r.pid, pid);

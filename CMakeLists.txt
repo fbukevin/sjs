@@ -10,18 +10,18 @@ message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Building with ${CMAKE_C_COMPILER_ID} ${CMAKE_C_COMPILER_VERSION} on ${CMAKE_SYSTEM}")
 
 set(CMAKE_C_FLAGS "$ENV{CFLAGS} -pedantic -std=c99 -Wall -Wextra -fstrict-aliasing -fno-omit-frame-pointer")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -Werror -Wno-unused-value -O0 -g3")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O2 -g")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -DDEBUG -Werror -Wno-unused-value -O0 -g3")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -DNDEBUG -O2 -g")
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 
 # Version
 #
-set(SJS__VERSION_MAJOR 17)
-set(SJS__VERSION_MINOR 0)
+set(SJS__VERSION_MAJOR 18)
+set(SJS__VERSION_MINOR 6)
 set(SJS__VERSION_PATCH 0)
-set(SJS__VERSION_SUFFIX "alpha")
+set(SJS__VERSION_SUFFIX "")
 configure_file (
     "${CMAKE_SOURCE_DIR}/include/sjs/version.h.in"
     "${CMAKE_SOURCE_DIR}/include/sjs/version.h"
@@ -81,22 +81,7 @@ add_definitions(
 )
 
 
-# duktape
-#
-add_library(duktape STATIC
-    src/duktape.c
-)
-
-target_include_directories(duktape
-    PRIVATE ${CMAKE_SOURCE_DIR}/include/sjs
-)
-
-set_target_properties(duktape
-    PROPERTIES COMPILE_FLAGS "-fPIC -Wno-unused-function -Wno-unused-parameter"
-)
-
-
-# libsjs
+# js files
 #
 configure_file(
         ${CMAKE_SOURCE_DIR}/src/bootstrap.js
@@ -108,6 +93,27 @@ configure_file(
         ${CMAKE_CURRENT_BINARY_DIR}/embed-js/polyfill.min.js
         COPYONLY)
 
+file(COPY ${CMAKE_SOURCE_DIR}/modules DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+
+# duktape
+#
+add_library(duktape STATIC
+    src/duktape.c
+)
+
+target_include_directories(duktape
+    PRIVATE ${CMAKE_SOURCE_DIR}/include/sjs
+)
+
+set_target_properties(duktape PROPERTIES
+    COMPILE_FLAGS "-Wno-unused-function -Wno-unused-parameter"
+    POSITION_INDEPENDENT_CODE ON
+)
+
+
+# libsjs
+#
 set(SOURCES
     src/binding.c
     src/bindings/errno.c
@@ -125,6 +131,7 @@ set(SOURCES
     src/bindings/random/random.c
     src/bindings/select.c
     src/bindings/socket.c
+    src/builtins.c
     src/duk_module_node.c
     src/modules.c
     src/platform/common.c
@@ -146,23 +153,47 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     )
 endif()
 
-add_library(sjs SHARED ${SOURCES})
+add_library(sjs_obj OBJECT ${SOURCES})
 
-target_include_directories(sjs
+target_include_directories(sjs_obj
     PRIVATE ${CMAKE_SOURCE_DIR}/include/sjs
 )
+
+set_target_properties(sjs_obj PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+)
+
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+    set_target_properties(sjs_obj PROPERTIES
+        COMPILE_DEFINITIONS "_POSIX_C_SOURCE=200112"
+    )
+endif()
+
+add_library(sjs_static STATIC $<TARGET_OBJECTS:sjs_obj>)
+
+target_link_libraries(sjs_static
+    duktape
+    m
+)
+
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+    target_link_libraries(sjs_static
+        dl
+        rt
+    )
+endif()
+
+add_library(sjs SHARED $<TARGET_OBJECTS:sjs_obj>)
 
 target_link_libraries(sjs
     duktape
     m
 )
+
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
     target_link_libraries(sjs
         dl
         rt
-    )
-set_target_properties(sjs PROPERTIES
-        COMPILE_DEFINITIONS "_POSIX_C_SOURCE=200112"
     )
 endif()
 
@@ -184,22 +215,17 @@ set_target_properties(sjs_cli PROPERTIES
 )
 
 target_link_libraries(sjs_cli
-    sjs
+    sjs_static
 )
 
 # install target
 #
 
-install(TARGETS sjs sjs_cli
+install(TARGETS sjs sjs_static sjs_cli
         RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib)
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
 
 install(DIRECTORY include/sjs
         DESTINATION include)
-
-install(DIRECTORY modules
-        DESTINATION lib/sjs
-        PATTERN "*.c" EXCLUDE
-        PATTERN "*.h" EXCLUDE
-        PATTERN "*.swp" EXCLUDE)
 

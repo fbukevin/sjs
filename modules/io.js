@@ -1,10 +1,13 @@
 'use strict';
 
 const _io = _system.binding('io');
+const _select = require('_io_select');
+const _poll = require('_io_poll');
 
 const errno = require('errno');
 const os = require('os');
-const outil = require('utils/object');
+const path = require('path');
+const outil = require('utils').object;
 
 
 function File(path, f, mode, buffering) {
@@ -106,20 +109,24 @@ File.prototype.close = function() {
 }
 
 
-function open(path, mode, buffering) {
-    var f = _io.fopen(path, mode);
-    return new File(path, f, mode, buffering);
+function open(fpath, mode, buffering) {
+    const npath = path.normalize(fpath);
+    const f = _io.fopen(npath, mode);
+
+    return new File(npath, f, mode, buffering);
 }
 
 
-function fdopen(fd, mode, path, buffering) {
-    var f = _io.fdopen(fd, mode);
-    return new File(path, f, mode, buffering);
+function fdopen(fd, mode, fpath, buffering) {
+    const npath = path.normalize(fpath);
+    const f = _io.fdopen(fd, mode);
+
+    return new File(npath, f, mode, buffering);
 }
 
 
-function readFile(path) {
-    const f = open(path, 'rb');
+function readFile(fpath) {
+    const f = open(fpath, 'rb');
     const st = os.fstat(f.fd);
     const data = f.read(st.size);
 
@@ -151,3 +158,5 @@ function checkFile() {
 exports.open     = open;
 exports.fdopen   = fdopen;
 exports.readFile = readFile;
+exports.select   = _select;
+exports.poll     = _poll;

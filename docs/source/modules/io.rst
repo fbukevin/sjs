@@ -38,7 +38,7 @@ File object
 
     :param nread: Amount of data to receive. If not specified it defaults to 4096. Alternatively, a `Buffer`
         can be passed, and data will be read into it.
-    :returns: The data that was read as a string or the amount of data read as a number, if a `Buffer` was passed.
+    :returns: The data that was read as a `Uint8Array` or the amount of data read as a number, if a `Buffer` was passed.
 
     .. seealso::
         :man:`fread(3)`
@@ -101,13 +101,13 @@ Functions
 
 .. js:function:: io.readFile(path)
 
-    Returns the contents of the file at the given `path`.
+    Returns the contents of the file at the given `path` as a `Uint8Array`.
 
 
-io/select
+io.select
 ---------
 
-This submodule provides access to :man:`select(2)`.
+This object provides access to :man:`select(2)`.
 
 .. js:function:: select.select(rfds, wfds, xfds, timeout)
 
@@ -125,10 +125,10 @@ This submodule provides access to :man:`select(2)`.
     For more information see :man:`select(2)`.
 
 
-io/poll
+io.poll
 -------
 
-This submodule provides access to :man:`poll(2)`.
+This object provides access to :man:`poll(2)`.
 
 .. js:data:: poll.POLLIN
 .. js:data:: poll.POLLOUT
